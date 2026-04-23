@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 
 /* ─── Task definitions ─────────────────────────────────────────────────── */
 const TASKS = [
@@ -9,8 +9,6 @@ const TASKS = [
     icon: "💼",
     color: "#8B5CF6",
     num: "I",
-    prompt: (t) =>
-      `You are a LinkedIn content expert. Repurpose the following content into a compelling LinkedIn post. Use line breaks for readability, include 3–5 relevant hashtags at the end, and aim for ~200 words. Only output the post itself.\n\nContent:\n${t}`,
   },
   {
     id: "twitter",
@@ -19,8 +17,6 @@ const TASKS = [
     icon: "𝕏",
     color: "#A855F7",
     num: "II",
-    prompt: (t) =>
-      `You are a viral Twitter/X content expert. Repurpose the following content into a 5-tweet thread. Number each tweet (1/, 2/, etc.), keep each under 280 characters, make the first tweet a hook. Only output the thread.\n\nContent:\n${t}`,
   },
   {
     id: "email",
@@ -29,8 +25,6 @@ const TASKS = [
     icon: "✉",
     color: "#9333EA",
     num: "III",
-    prompt: (t) =>
-      `You are an email marketing expert. Repurpose the following content into an email newsletter snippet: a punchy subject line, a 2-sentence preview text, and a 150-word body with a call-to-action. Format clearly with labels. Only output the email snippet.\n\nContent:\n${t}`,
   },
   {
     id: "video",
@@ -39,8 +33,6 @@ const TASKS = [
     icon: "▶",
     color: "#7C3AED",
     num: "IV",
-    prompt: (t) =>
-      `You are a short-form video scriptwriter. Repurpose the following content into a 60-second video script. Include [HOOK], [MAIN POINTS], and [CTA] sections. Use spoken, conversational language. Only output the script.\n\nContent:\n${t}`,
   },
   {
     id: "seo",
@@ -49,8 +41,6 @@ const TASKS = [
     icon: "⊕",
     color: "#6D28D9",
     num: "V",
-    prompt: (t) =>
-      `You are an SEO specialist. From the following content, generate: 1) An SEO-optimized page title (under 60 chars), 2) A meta description (under 155 chars), 3) 5 target keywords. Format with clear labels. Only output these three items.\n\nContent:\n${t}`,
   },
 ];
 
@@ -71,167 +61,11 @@ const f = {
   great: { color: "#A855F7", fontFamily: "mono", fontSize: "11px" },
 };
 
-/* ─── API key setup screen ─────────────────────────────────────────────── */
-function KeySetup({ onSave }) {
-  const [val, setVal] = useState("");
-  const [err, setErr] = useState("");
-
-  const save = () => {
-    const trimmed = val.trim();
-    if (!trimmed.startsWith("sk-ant-")) {
-      setErr("That doesn't look right — Anthropic keys start with sk-ant-");
-      return;
-    }
-    localStorage.setItem("repurpose_api_key", trimmed);
-    onSave(trimmed);
-  };
-
-  return (
-    <div style={ks.overlay}>
-      <div style={ks.card}>
-        <div style={ks.logoDot} />
-        <p style={ks.eyebrow}>— ONE-TIME SETUP —</p>
-        <h2 style={ks.title}>Enter your<br /><em style={ks.italic}>API key.</em></h2>
-        <p style={ks.sub}>
-          This tool uses the Claude AI to generate your content. You need a free Anthropic API key.
-          It's saved locally in your browser — never sent anywhere else.
-        </p>
-        <a
-          href="https://console.anthropic.com/account/keys"
-          target="_blank"
-          rel="noreferrer"
-          style={ks.link}
-        >
-          Get your key at console.anthropic.com ↗
-        </a>
-        <input
-          style={{ ...ks.input, borderColor: err ? "#9333EA" : "#1E1630" }}
-          type="password"
-          placeholder="sk-ant-api03-..."
-          value={val}
-          onChange={(e) => { setVal(e.target.value); setErr(""); }}
-          onKeyDown={(e) => e.key === "Enter" && save()}
-          autoFocus
-        />
-        {err && <p style={ks.err}>{err}</p>}
-        <button style={ks.btn} onClick={save} disabled={!val.trim()}>
-          Save and continue →
-        </button>
-        <p style={ks.fine}>Stored only in your browser's localStorage. Never leaves your device.</p>
-      </div>
-    </div>
-  );
-}
-
-const ks = {
-  overlay: {
-    minHeight: "100vh",
-    background: "#07070A",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "24px",
-    fontFamily: "'Syne', sans-serif",
-  },
-  card: {
-    background: "#0C0A14",
-    border: "1px solid #1E1630",
-    borderRadius: "12px",
-    padding: "52px 48px",
-    maxWidth: "480px",
-    width: "100%",
-    textAlign: "center",
-    boxShadow: "0 0 80px rgba(76,29,149,0.12)",
-  },
-  logoDot: {
-    width: "8px",
-    height: "8px",
-    borderRadius: "50%",
-    background: "#7C3AED",
-    boxShadow: "0 0 12px #7C3AED",
-    margin: "0 auto 28px",
-  },
-  eyebrow: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: "10px",
-    letterSpacing: "0.2em",
-    color: "#4C3A80",
-    marginBottom: "20px",
-  },
-  title: {
-    fontFamily: "'Playfair Display', serif",
-    fontSize: "clamp(36px, 5vw, 52px)",
-    fontWeight: 900,
-    color: "#F3EEFF",
-    lineHeight: 1.05,
-    marginBottom: "20px",
-  },
-  italic: { fontStyle: "italic", color: "#A855F7" },
-  sub: {
-    fontSize: "14px",
-    color: "#5A5370",
-    lineHeight: 1.7,
-    marginBottom: "16px",
-  },
-  link: {
-    display: "inline-block",
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: "11px",
-    color: "#7C3AED",
-    letterSpacing: "0.05em",
-    marginBottom: "24px",
-    textDecoration: "none",
-  },
-  input: {
-    display: "block",
-    width: "100%",
-    background: "#09080F",
-    border: "1px solid",
-    color: "#C4B5FD",
-    fontSize: "13px",
-    padding: "14px 16px",
-    borderRadius: "6px",
-    fontFamily: "'JetBrains Mono', monospace",
-    marginBottom: "10px",
-    outline: "none",
-    transition: "border-color 0.2s",
-  },
-  err: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: "11px",
-    color: "#A855F7",
-    marginBottom: "12px",
-    textAlign: "left",
-  },
-  btn: {
-    width: "100%",
-    background: "linear-gradient(135deg, #6D28D9, #8B5CF6)",
-    color: "#fff",
-    border: "none",
-    padding: "14px",
-    fontSize: "13px",
-    fontWeight: 700,
-    fontFamily: "'Syne', sans-serif",
-    letterSpacing: "0.08em",
-    borderRadius: "6px",
-    cursor: "pointer",
-    marginBottom: "16px",
-    boxShadow: "0 4px 24px rgba(124,58,237,0.35)",
-  },
-  fine: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: "10px",
-    color: "#2A2040",
-    letterSpacing: "0.05em",
-  },
-};
-
 /* ─── Main app ─────────────────────────────────────────────────────────── */
 export default function App() {
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem("repurpose_api_key") || "");
-  const [input, setInput]   = useState("");
+  const [input, setInput]       = useState("");
   const [results, setResults]   = useState({});
-  const [statuses, setStatuses] = useState({});   // "running" | "done" | "error"
+  const [statuses, setStatuses] = useState({});
   const [running, setRunning]   = useState(false);
   const [expanded, setExpanded] = useState({});
   const [copied, setCopied]     = useState(null);
@@ -239,31 +73,6 @@ export default function App() {
 
   const allSettled = Object.keys(statuses).length === TASKS.length &&
     TASKS.every((t) => statuses[t.id] === "done" || statuses[t.id] === "error");
-
-  const callClaude = useCallback(async (prompt) => {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 1000,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      const msg = err?.error?.message || `API error ${res.status}`;
-      if (res.status === 401) throw new Error("Invalid API key. Click 'Change key' in the top right.");
-      throw new Error(msg);
-    }
-    const data = await res.json();
-    return data.content?.map((b) => b.text || "").join("") || "No output generated.";
-  }, [apiKey]);
 
   const runAgent = async () => {
     if (input.trim().length < 50 || running) return;
@@ -273,19 +82,37 @@ export default function App() {
     setExpanded({});
     setStatuses(TASKS.reduce((acc, t) => ({ ...acc, [t.id]: "running" }), {}));
 
-    await Promise.all(
-      TASKS.map(async (task) => {
-        try {
-          const text = await callClaude(task.prompt(input));
-          setResults((r) => ({ ...r, [task.id]: text }));
-          setStatuses((s) => ({ ...s, [task.id]: "done" }));
-        } catch (e) {
-          if (e.message.includes("Invalid API key")) setGlobalError(e.message);
-          setResults((r) => ({ ...r, [task.id]: `⚠ ${e.message}` }));
-          setStatuses((s) => ({ ...s, [task.id]: "error" }));
-        }
-      })
-    );
+    try {
+      const res = await fetch("/api/repurpose", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: input }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error ${res.status}`);
+      }
+      const data = await res.json();
+      const newStatuses = {};
+      const newResults  = {};
+      TASKS.forEach((t) => {
+        const text = data.results[t.id] || "No output generated.";
+        newStatuses[t.id] = text.startsWith("Error:") ? "error" : "done";
+        newResults[t.id]  = text;
+      });
+      setResults(newResults);
+      setStatuses(newStatuses);
+    } catch (e) {
+      setGlobalError(e.message);
+      const errStatuses = {};
+      const errResults  = {};
+      TASKS.forEach((t) => {
+        errStatuses[t.id] = "error";
+        errResults[t.id]  = `Error: ${e.message}`;
+      });
+      setStatuses(errStatuses);
+      setResults(errResults);
+    }
 
     setRunning(false);
   };
@@ -296,16 +123,8 @@ export default function App() {
     setTimeout(() => setCopied(null), 2000);
   };
 
-  const clearKey = () => {
-    localStorage.removeItem("repurpose_api_key");
-    setApiKey("");
-  };
-
   const canRun = input.trim().length >= 50 && !running;
   const showResults = Object.keys(statuses).length > 0;
-
-  /* ── Key setup gate ── */
-  if (!apiKey) return <KeySetup onSave={setApiKey} />;
 
   return (
     <div style={s.root}>
@@ -318,9 +137,6 @@ export default function App() {
           <span style={s.navDot} />
           <span style={s.navLogo}>REPURPOSE</span>
         </div>
-        <button style={s.changeKeyBtn} onClick={clearKey} title="Change API key">
-          Change key
-        </button>
       </nav>
 
       {/* ── Hero ── */}
@@ -593,7 +409,7 @@ export default function App() {
         <div style={s.footerInner} className="footer-inner">
           <span style={s.footerLogo}>REPURPOSE</span>
           <span style={s.footerMeta}>
-            Claude Haiku 4.5 · Runs entirely in your browser · API key stored locally
+            Claude Haiku 4.5 · Runs via local server · API key in .env
           </span>
         </div>
       </footer>
@@ -615,7 +431,6 @@ export default function App() {
           box-shadow: 0 0 0 3px rgba(124,58,237,0.12) !important;
         }
         textarea::placeholder { color: #2A2040; }
-        input:focus { outline: none; border-color: #7C3AED !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
 
         @keyframes spin    { to { transform: rotate(360deg); } }
         @keyframes fadeUp  { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
@@ -707,18 +522,6 @@ const s = {
     fontSize: "13px",
     letterSpacing: "0.3em",
     color: "#C4B5FD",
-  },
-  changeKeyBtn: {
-    background: "none",
-    border: "1px solid #1E1630",
-    color: "#3A2E60",
-    fontFamily: mono,
-    fontSize: "10px",
-    letterSpacing: "0.1em",
-    padding: "5px 14px",
-    borderRadius: "100px",
-    cursor: "pointer",
-    transition: "all .15s",
   },
 
   /* Hero */
